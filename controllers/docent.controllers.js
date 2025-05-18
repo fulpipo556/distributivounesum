@@ -1,5 +1,7 @@
 import pool from '../database/conexion.js';
-
+import multer from 'multer';
+import xlsx from 'xlsx';
+import { parse } from 'csv-parse/sync';
 // Consulta Personalizada
 const getDoces = async (req, res, next) => {
     try {
@@ -92,10 +94,105 @@ const updateDoces = async (req, res, next) => {
     }
 };
 
+
+
+const uploadDoces = async (req, res, next) => {
+    const client = await pool.connect();
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No se ha subido ningún archivo" });
+        }
+
+        // Validate file type
+        const validMimes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/csv'
+        ];
+        if (!validMimes.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: "Formato de archivo no válido. Use Excel o CSV" });
+        }
+
+        const buffer = req.file.buffer;
+        let data = [];
+
+        // Parse file based on type
+        if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            const workbook = xlsx.read(buffer);
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            data = xlsx.utils.sheet_to_json(worksheet);
+        } else {
+            const content = buffer.toString();
+            data = parse(content, { columns: true, skip_empty_lines: true });
+        }
+
+        // Validate data structure
+        if (!data.length) {
+            return res.status(400).json({ message: "El archivo está vacío" });
+        }
+
+        await client.query('BEGIN');
+        let count = 0;
+
+        for (const row of data) {
+            // Validate required fields
+            if (!row.cedula || !row.nombre_apellido || !row.fecha_nacimiento) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ 
+                    message: "Datos incompletos en la fila " + (count + 1) 
+                });
+            }
+
+            const docenteData = {
+                ced: row.cedula?.trim(),
+                nomape: row.nombre_apellido?.trim(),
+                fechana: row.fecha_nacimiento,
+                tele: row.telefono?.trim(),
+                dire: row.direccion?.trim(),
+                correo: row.correo?.trim(),
+                estadoc: row.estado?.trim() || 'Activado'
+            };
+
+            // Validate cédula format
+            if (!/^\d{10}$/.test(docenteData.ced)) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ 
+                    message: `Cédula inválida en la fila ${count + 1}: ${docenteData.ced}` 
+                });
+            }
+
+            await client.query(
+                `INSERT INTO distributivo_docente 
+                (ced, nomape, fechana, tele, dire, correo, estadoc) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (ced) DO UPDATE SET
+                nomape = $2, fechana = $3, tele = $4, 
+                dire = $5, correo = $6, estadoc = $7`,
+                Object.values(docenteData)
+            );
+            count++;
+        }
+
+        await client.query('COMMIT');
+        res.json({ 
+            message: "Archivo procesado exitosamente", 
+            count,
+            details: `${count} docentes procesados`
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error en uploadDoces:', error);
+        next(error);
+    } finally {
+        client.release();
+    }
+};
+
+
 export const docentcontrollers = {
     getDoces,
     getAllDoces,
     createDoces,
     deleteDoces,
-    updateDoces
+    updateDoces,
+    uploadDoces
 };

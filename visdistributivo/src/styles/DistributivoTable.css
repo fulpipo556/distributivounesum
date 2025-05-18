@@ -1,0 +1,90 @@
+.table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.distributivo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.distributivo-table th,
+.distributivo-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.distributivo-table th {
+  background-color: #f2f2f2;
+  color: #333;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.distributivo-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.distributivo-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.expandir-celda {
+  text-align: center;
+}
+
+.btn-expandir {
+  background-color: #0a7c3e; /* Verde UNESUM */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-expandir:hover {
+  background-color: #086032;
+}
+
+.detalle-row {
+  background-color: #f5f5f5 !important;
+}
+
+.detalle-row td {
+  border-top: none;
+  color: #555;
+}
+
+.btn-edit,
+.btn-delete {
+  margin: 2px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: #0066b3; /* Azul UNESUM */
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #004e8a;
+}
+
+.btn-delete {
+  background-color: #d31920; /* Rojo UNESUM */
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #b3151b;
+}
