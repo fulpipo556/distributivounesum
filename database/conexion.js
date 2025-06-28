@@ -10,10 +10,9 @@ const pool = new Pool({
   password: process.env.PASSWORD,
   port: process.env.PORTP, 
   ssl: {
-    rejectUnauthorized: true,
+    rejectUnauthorized: false,
     mode: 'require'
-}
-
+  }
 });
 
 try {
@@ -22,6 +21,5 @@ try {
 } catch (error) {
     console.log(error)
 }
-
 
 export default pool;
